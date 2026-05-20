@@ -336,9 +336,56 @@ void loop() {
 
 > ⚠️ **Ra-02 Note:** Ra-02 has a different physical form factor than Ra-01 but uses the **same SX1278 chip**. The wiring and code are identical. Ra-02 uses a U.FL antenna connector — make sure a 433MHz antenna is attached before powering on.
 
+## Ra-02 Pin Layout Reference
+
+```
+         [U.FL Antenna]
+    ┌──────────────────────┐
+    │      Ai-Thinker      │
+    │        Ra-02         │
+    │     SX1278 chip      │
+    │                      │
+GND ●                    ● GND
+GND ●                    ● NSS
+3V3 ●                    ● MOSI
+DIO3●                    ● RST
+DIO4●                    ● [not used]
+DIO2●                    ● [not used]
+DIO1●                    ● [not used]
+DIO0●                    ● [not used]
+SCK ●                    ● [not used]
+MISO●                    ● [not used]
+    └──────────────────────┘
+  Left side (J2)      Right side (J1)
+```
+
+> Pin labels are printed on the PCB edge — always verify visually before connecting.
+
 ## Wiring
 
-Exact same wiring as Team B — refer to Team B wiring section above.
+### Power Wiring
+
+| From (Arduino) | To | Note |
+|---|---|---|
+| 3.3V | Level Converter **VCCA** | A side power |
+| 3.3V | Ra-02 **3V3** | Ra-02 power (direct, NOT through converter) |
+| 5V | Level Converter **VCCB** | B side power |
+| GND | Level Converter **GND** (A side) | Common ground |
+| GND | Level Converter **GND** (B side) | Common ground |
+| GND | Ra-02 **GND** | Common ground |
+
+### Signal Wiring (Through Level Converter)
+
+| Arduino Pin | Converter B side | Converter A side | Ra-02 Pin |
+|---|---|---|---|
+| D13 (SCK) | B0 | A0 | SCK |
+| D12 (MISO) | B1 | A1 | MISO |
+| D11 (MOSI) | B2 | A2 | MOSI |
+| D10 (NSS) | B3 | A3 | NSS |
+| D9 (RST) | B4 | A4 | RST |
+| D8 (DIO0) | B5 | A5 | DIO0 |
+
+### Full Connection Diagram
 
 ```
 LAPTOP USB
@@ -346,41 +393,26 @@ LAPTOP USB
     ↓
 [Arduino UNO]
     │
-    ├── 3.3V ──┬──────────────→ VCCA (Converter A side power)
-    │          └──────────────→ 3V3  (Ra-01 direct power)
+    ├── 3.3V ──┬──────────────→ VCCA  (Converter A side power)
+    │          └──────────────→ 3V3   (Ra-02 direct power)
     │
-    ├── 5V  ───────────────────→ VCCB (Converter B side power)
+    ├── 5V  ───────────────────→ VCCB  (Converter B side power)
     │
     ├── GND ───┬──────────────→ GND-A (Converter A side)
     │          ├──────────────→ GND-B (Converter B side)
-    │          └──────────────→ GND   (Ra-01)
+    │          └──────────────→ GND   (Ra-02)
     │
-    ├── D13 ───→ [B0 ═══ A0] ──→ SCK  (Ra-01)
-    ├── D12 ───→ [B1 ═══ A1] ──→ MISO (Ra-01)
-    ├── D11 ───→ [B2 ═══ A2] ──→ MOSI (Ra-01)
-    ├── D10 ───→ [B3 ═══ A3] ──→ NSS  (Ra-01)
-    ├── D9  ───→ [B4 ═══ A4] ──→ RST  (Ra-01)
-    └── D8  ───→ [B5 ═══ A5] ──→ DIO0 (Ra-01)
+    ├── D13 ───→ [B0 ═══ A0] ──→ SCK  (Ra-02 left side J2)
+    ├── D12 ───→ [B1 ═══ A1] ──→ MISO (Ra-02 left side J2)
+    ├── D11 ───→ [B2 ═══ A2] ──→ MOSI (Ra-02 right side J1)
+    ├── D10 ───→ [B3 ═══ A3] ──→ NSS  (Ra-02 right side J1)
+    ├── D9  ───→ [B4 ═══ A4] ──→ RST  (Ra-02 right side J1)
+    └── D8  ───→ [B5 ═══ A5] ──→ DIO0 (Ra-02 left side J2)
 ```
 
-### Ra-02 Pin Layout Reference (Team C)
+> ⚠️ **Important:** Ra-02 has pins on **both sides** (J1 and J2). SCK, MISO, DIO0 are on the **left side (J2)**. MOSI, NSS, RST are on the **right side (J1)**. Check the label on the PCB carefully.
 
-```
-Right side (J1):
-┌──────────────────┐
-│  GND             │
-│  NSS             │
-│  MOSI            │
-│  MISO            │
-│  SCK             │
-│  DIO0            │
-│  DIO1            │
-│  3V3 / GND       │
-└──────────────────┘
-      [U.FL antenna connector on top]
-```
-
-> The Ra-02 pin labels are printed on the PCB edge. Match them to the level converter A-side as shown in the wiring table above.
+## Team C — Transmitter Code (Arduino sends to Team A & B)
 
 ```cpp
 #include <SPI.h>
@@ -535,6 +567,8 @@ Team B Received: MSG from TeamC | Packet #2  |  RSSI: -47 dBm
 ---
 
 
+
+# Common Settings — All 3 Teams Must Match
 
 | Setting | Value |
 |---|---|
