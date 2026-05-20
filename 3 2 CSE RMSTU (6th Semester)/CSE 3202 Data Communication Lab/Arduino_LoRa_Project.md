@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **Team A** | ESP32 NodeMCU 30P | Ra-01 SX1278 433MHz | Not needed (3.3V native) |
 | **Team B (You)** | Arduino UNO | Ra-01 SX1278 433MHz | 8CH Bi-Directional |
-| **Team C** | Arduino UNO | Ra-01 SX1278 433MHz | 8CH Bi-Directional |
+| **Team C** | Arduino UNO | Ra-02 SX1278 433MHz | 8CH Bi-Directional |
 
 ### Communication Flow
 ```
@@ -20,7 +20,9 @@ Team C (Arduino) ──sends──→ Team A (ESP32) receives
            (circular communication demo)
 ```
 
-Or simply: **All teams broadcast, all teams receive** — same frequency, different sync words per pair.
+Or simply: **All teams broadcast, all teams receive** — same frequency, same sync word.
+
+> **Note:** Ra-01 and Ra-02 are **fully compatible** — both use the SX1278 chip inside. Team C using Ra-02 works perfectly with Teams A and B.
 
 ---
 
@@ -324,13 +326,15 @@ void loop() {
 
 ---
 
-# TEAM C — Arduino UNO + Ra-01 LoRa + Level Converter
+# TEAM C — Arduino UNO + Ra-02 LoRa + Level Converter
 
 ## Components
 - Arduino UNO (ATmega328P)
-- Ra-01 LoRa SX1278 433MHz
+- **Ra-02 LoRa SX1278 433MHz** (confirmed from physical module)
 - 8CH Bi-Directional Logic Level Converter
 - USB-B cable from Laptop
+
+> ⚠️ **Ra-02 Note:** Ra-02 has a different physical form factor than Ra-01 but uses the **same SX1278 chip**. The wiring and code are identical. Ra-02 uses a U.FL antenna connector — make sure a 433MHz antenna is attached before powering on.
 
 ## Wiring
 
@@ -359,7 +363,24 @@ LAPTOP USB
     └── D8  ───→ [B5 ═══ A5] ──→ DIO0 (Ra-01)
 ```
 
-## Team C — Transmitter Code (Arduino sends to Team A & B)
+### Ra-02 Pin Layout Reference (Team C)
+
+```
+Right side (J1):
+┌──────────────────┐
+│  GND             │
+│  NSS             │
+│  MOSI            │
+│  MISO            │
+│  SCK             │
+│  DIO0            │
+│  DIO1            │
+│  3V3 / GND       │
+└──────────────────┘
+      [U.FL antenna connector on top]
+```
+
+> The Ra-02 pin labels are printed on the PCB edge. Match them to the level converter A-side as shown in the wiring table above.
 
 ```cpp
 #include <SPI.h>
@@ -442,7 +463,78 @@ void loop() {
 
 ---
 
-# Common Settings — All 3 Teams Must Match
+---
+
+---
+
+# Cross-Team Communication — All 3 Teams
+
+## How It Works
+
+All 3 modules use the **same SX1278 chip at 433MHz** with **sync word 0x12**. This means:
+- When **any** team transmits → **both other teams** receive it simultaneously
+- It works like a radio broadcast — one transmits, all others hear it
+
+```
+Team A sends  →  Team B hears it  ✅
+              →  Team C hears it  ✅
+
+Team B sends  →  Team A hears it  ✅
+              →  Team C hears it  ✅
+
+Team C sends  →  Team A hears it  ✅
+              →  Team B hears it  ✅
+```
+
+## ⚠️ Packet Collision Problem
+
+If all 3 teams transmit **at the same time**, packets collide and nobody receives correctly.
+
+## Fix — Stagger Transmit Timing
+
+Add a startup delay in `setup()` so each team starts transmitting at a different time:
+
+**Team A (ESP32)** — no change, starts immediately
+```cpp
+void setup() {
+  // ... existing setup code ...
+  // No extra delay needed
+}
+```
+
+**Team B (Arduino)** — add 1 second delay before loop starts
+```cpp
+void setup() {
+  // ... existing setup code ...
+  delay(1000);  // Start 1 second after Team A
+}
+```
+
+**Team C (Arduino)** — add 2 second delay before loop starts
+```cpp
+void setup() {
+  // ... existing setup code ...
+  delay(2000);  // Start 2 seconds after Team A
+}
+```
+
+With `delay(3000)` in each loop, transmissions will be staggered by ~1 second and never overlap.
+
+## Expected Serial Monitor Output
+
+**Team B screen** will show packets from both other teams:
+```
+Team B Received: MSG from TeamA | Packet #1  |  RSSI: -52 dBm
+Team B Received: MSG from TeamC | Packet #1  |  RSSI: -48 dBm
+Team B Received: MSG from TeamA | Packet #2  |  RSSI: -51 dBm
+Team B Received: MSG from TeamC | Packet #2  |  RSSI: -47 dBm
+```
+
+---
+
+---
+
+
 
 | Setting | Value |
 |---|---|
@@ -456,8 +548,10 @@ void loop() {
 
 # Safety Checklist (Team B & C)
 
-- ✅ Antenna attached to Ra-01 before powering on
-- ✅ Ra-01 VCC connected to 3.3V only (NOT 5V)
+- ✅ Antenna attached to Ra-01/Ra-02 before powering on
+  - Team B (Ra-01): wire antenna soldered to ANT pad
+  - Team C (Ra-02): 433MHz antenna connected to U.FL connector
+- ✅ Ra-01/Ra-02 VCC connected to 3.3V only (NOT 5V)
 - ✅ VCCA = 3.3V and VCCB = 5V (NOT reversed)
 - ✅ All GNDs connected together
 - ✅ USB cable connected to laptop

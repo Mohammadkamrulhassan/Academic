@@ -26,7 +26,7 @@ void loop() {
   counter++;
 
   LoRa.beginPacket();
-  LoRa.print("MSG from TeamB | Packet #");
+  LoRa.print("MSG from TeamB | Packet #"); 
   LoRa.print(counter);
   LoRa.endPacket();
 
@@ -37,7 +37,7 @@ void loop() {
 }
 // */
 
-// Receiver Code (basic)
+// Receiver C          ode (basic)
 /*
 #include <SPI.h>
 #include <LoRa.h>
