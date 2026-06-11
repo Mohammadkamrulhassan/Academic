@@ -473,6 +473,8 @@ Experience (data) → Learning Algorithm → Improved Performance
 ### (a) Supervised Learning
 
 The model is trained on **labeled input-output pairs** — the "teacher" provides the correct answers.
+<img width="1202" height="920" alt="image" src="https://github.com/user-attachments/assets/8c3f742f-87a9-46af-bfb9-e610cb625b5f" />
+
 
 ```
 Training Data:  (X₁,Y₁), (X₂,Y₂), ..., (Xₙ,Yₙ)
