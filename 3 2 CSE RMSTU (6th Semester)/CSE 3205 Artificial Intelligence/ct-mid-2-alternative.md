@@ -90,6 +90,7 @@ The human brain contains about **86 billion neurons**, each connected to thousan
 > - 4th Sem Q5(c): *"Define neuron. Describe the mathematical model of a neuron."*
 
 ### 2.1 Structure of a Single Artificial Neuron
+<img width="415" height="220" alt="image" src="https://github.com/user-attachments/assets/a39b31e4-a0a2-430f-b4d4-183c51e8ad6e" />
 
 ```
   x₁ ──[w₁]──┐
@@ -151,7 +152,7 @@ Artificial Neural Networks (ANN)
 > - 5th Sem Q6(c): *"What is brain? It is faster than the fastest digital computer. Explain with example."*
 
 ### 3.1 Standard Feed-Forward Neural Network
-[image] (#https://www.google.com/url?sa=t&source=web&rct=j&url=https%3A%2F%2Faiml.com%2Fwhat-is-the-basic-architecture-of-an-artificial-neural-network-ann%2F&ved=0CBYQjRxqFwoTCLDgzd2V_pQDFQAAAAAdAAAAABAG&opi=89978449)
+<img width="1024" height="399" alt="image" src="https://github.com/user-attachments/assets/8d1a8ad8-0107-41d0-ba80-ce3753e5cbf3" />
 ```
  INPUT LAYER        HIDDEN LAYER        OUTPUT LAYER
  ───────────        ────────────        ────────────
@@ -165,6 +166,7 @@ Artificial Neural Networks (ANN)
 
    [Input]         [Hidden]        [Output]
 ```
+
 
 ### 3.2 Layer Descriptions
 
@@ -214,10 +216,13 @@ X₃(12) ──[W₃=0.1]────────► [Y₂] ──[v₂=0.45]┘
 φ(net) = 1   if net ≥ θ
 φ(net) = 0   if net < θ
 ```
+<img width="3000" height="2000" alt="image" src="https://github.com/user-attachments/assets/293ce485-ee85-4ee3-90a0-ee3d006723b1" />
+<img width="1267" height="906" alt="image" src="https://github.com/user-attachments/assets/b5cedb25-a26a-43c9-8a7d-9f90ec4c084f" />
 
 **Exam:** "If value is 5 or less → output 0, otherwise → output 1" means θ = 5.
 
 ### 4.2 Sigmoid Function
+<img width="856" height="554" alt="image" src="https://github.com/user-attachments/assets/05e18e7a-59dd-42de-b7d1-a1be7887e573" />
 
 ```
          1 │                 ─────────────
@@ -237,6 +242,9 @@ Used when smooth, differentiable output in range (0,1) is needed.
 ```
 φ(net) = net    (output = input, no transformation)
 ```
+<img width="792" height="612" alt="image" src="https://github.com/user-attachments/assets/35884aa7-aff7-4887-bfea-3be6299a416e" />
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/0b578e4c-b61e-4134-a529-e7f6327cef2b" />
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/4ef407b8-0078-44dc-974d-807a20c14edb" />
 
 Used when **no transfer function** is applied — raw weighted sum is the output.
 
@@ -248,6 +256,7 @@ MSE is a **loss/error function**, not an activation function. It measures how wr
 E = (1/2) × (desired − actual)²      [single output, simplified]
 E = (1/n) × Σ (dᵢ − yᵢ)²           [general form, n outputs]
 ```
+<img width="1200" height="675" alt="image" src="https://github.com/user-attachments/assets/8c5f589f-30b8-4d66-a673-be9a60f2f5a9" />
 
 **Exam note:** "Compute Z with MSE used at all neurons" means compute raw Z first (no activation), then report:
 ```
@@ -442,6 +451,8 @@ Training Data:  (X₁,Y₁), (X₂,Y₂), ..., (Xₙ,Yₙ)
                         ↓
           New input X_new → Predict Y_new
 ```
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/8c5b5740-fa40-4ce7-96ce-feae71f081c0" />
+<img width="273" height="185" alt="image" src="https://github.com/user-attachments/assets/c11a8653-a51d-4e7d-8fdf-48f8c99322e1" />
 
 **Analogy:** Learning from a textbook with an answer key — the teacher provides correct labels for every example.
 
@@ -463,6 +474,7 @@ Unlabeled Data: X₁, X₂, X₃, ..., Xₙ
                         ↓
           Clusters / Patterns / Groups
 ```
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/462431a5-279e-44f7-b278-88ef78999ea1" />
 
 **Analogy:** Sorting unknown seashells into groups by shape — no guide, just observed similarity.
 
@@ -476,6 +488,9 @@ Unlabeled Data: X₁, X₂, X₃, ..., Xₙ
 | **Goal** | Maximize cumulative reward over time |
 | **Feedback** | Reward (+) or Penalty (−) after each action |
 | **Examples** | Game-playing AI (Chess, Go), robotics, self-driving cars |
+<img width="1200" height="628" alt="image" src="https://github.com/user-attachments/assets/2142a504-527c-4ad7-ae50-05f78217478d" />
+<img width="1748" height="1240" alt="image" src="https://github.com/user-attachments/assets/98887422-24de-4496-82b1-b0f6103c6a59" />
+<img width="1200" height="609" alt="image" src="https://github.com/user-attachments/assets/ff73c180-f0aa-4576-b403-32e41bc55e5c" />
 
 ```
         ┌──────────────────────────────────────┐
@@ -532,6 +547,7 @@ Unlabeled Data: X₁, X₂, X₃, ..., Xₙ
 | `Z_sigmoid = 1/(1 + e^−Z_raw)` | Z after sigmoid |
 
 ---
+<img width="1001" height="471" alt="image" src="https://github.com/user-attachments/assets/bc8041c9-4b6f-4c58-b8ff-c5196b3c8fdb" />
 
 ---
 
@@ -547,6 +563,7 @@ Unlabeled Data: X₁, X₂, X₃, ..., Xₙ
 > - 5th Sem Q6(i): *"Are Burglary and Earthquake independent? Justify."*
 
 A **Bayesian Network (BN)** is a probabilistic graphical model that represents variables and their conditional dependencies using a **Directed Acyclic Graph (DAG)**.
+
 
 > *"A simple, graphical notation for conditional independence assertions and hence for compact specification of full joint distributions."*  
 > — Slide 7, `06-bayesian-networks.pdf`
@@ -577,6 +594,7 @@ A **Bayesian Network (BN)** is a probabilistic graphical model that represents v
 > **Key rule:** A node with **k parents** has a CPT of **2ᵏ rows**.
 
 ### 9.2 General BN Architecture
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/b591a6ea-d368-4e55-ab24-5f40a9cb3d80" />
 
 ```
          ┌─────────┐        ┌──────────┐
@@ -645,7 +663,7 @@ A **Bayesian Network (BN)** is a probabilistic graphical model that represents v
 | MaryCalls | M | Mary calls the owner |
 
 ### 10.3 Network Architecture (DAG)
-
+<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/a8c39e04-b070-41e9-9e09-9c88e7af0278" />
 ```
     ┌───────────┐              ┌────────────┐
     │ Burglary  │              │ Earthquake │
