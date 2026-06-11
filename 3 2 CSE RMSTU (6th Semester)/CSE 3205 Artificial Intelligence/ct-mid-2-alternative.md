@@ -48,7 +48,7 @@
 ### 1.1 Biological Neuron
 
 The human brain contains about **86 billion neurons**, each connected to thousands of others. A biological neuron has:
-
+<img width="415" height="220" alt="image" src="https://github.com/user-attachments/assets/a39b31e4-a0a2-430f-b4d4-183c51e8ad6e" />
 ```
         Dendrites                    Axon Terminals
         (inputs)                     (outputs)
@@ -90,7 +90,7 @@ The human brain contains about **86 billion neurons**, each connected to thousan
 > - 4th Sem Q5(c): *"Define neuron. Describe the mathematical model of a neuron."*
 
 ### 2.1 Structure of a Single Artificial Neuron
-<img width="415" height="220" alt="image" src="https://github.com/user-attachments/assets/a39b31e4-a0a2-430f-b4d4-183c51e8ad6e" />
+
 
 ```
   x₁ ──[w₁]──┐
@@ -153,6 +153,7 @@ Artificial Neural Networks (ANN)
 
 ### 3.1 Standard Feed-Forward Neural Network
 <img width="1024" height="399" alt="image" src="https://github.com/user-attachments/assets/8d1a8ad8-0107-41d0-ba80-ce3753e5cbf3" />
+
 ```
  INPUT LAYER        HIDDEN LAYER        OUTPUT LAYER
  ───────────        ────────────        ────────────
