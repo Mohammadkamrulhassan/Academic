@@ -143,6 +143,7 @@ Where `vⱼ` = weights from hidden layer to output neuron.
 ---
 
 ## 3. ANN Architecture (Layers & Structure)
+Artificial Neural Networks (ANN)
 
 > **Exam Questions Covered Here:**
 > - 7th Sem Q5(b): *"Discuss the classification approaches to pattern recognition."*
