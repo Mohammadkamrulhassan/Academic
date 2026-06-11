@@ -545,6 +545,7 @@ An **agent** learns by interacting with an **environment** and receiving **rewar
 <img src="https://github.com/user-attachments/assets/98887422-24de-4496-82b1-b0f6103c6a59" alt="Reinforcement Learning Cycle" width="1748" height="1240" />
 
 <img src="https://github.com/user-attachments/assets/ff73c180-f0aa-4576-b403-32e41bc55e5c" alt="Reinforcement Learning Loop" width="1200" height="609" />
+
 ```
    ┌─────────┐   Action a    ┌─────────────┐
    │  Agent  │ ────────────► │ Environment │
