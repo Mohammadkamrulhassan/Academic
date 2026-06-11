@@ -151,7 +151,7 @@ Artificial Neural Networks (ANN)
 > - 5th Sem Q6(c): *"What is brain? It is faster than the fastest digital computer. Explain with example."*
 
 ### 3.1 Standard Feed-Forward Neural Network
-
+[image] (#https://www.google.com/url?sa=t&source=web&rct=j&url=https%3A%2F%2Faiml.com%2Fwhat-is-the-basic-architecture-of-an-artificial-neural-network-ann%2F&ved=0CBYQjRxqFwoTCLDgzd2V_pQDFQAAAAAdAAAAABAG&opi=89978449)
 ```
  INPUT LAYER        HIDDEN LAYER        OUTPUT LAYER
  ───────────        ────────────        ────────────
