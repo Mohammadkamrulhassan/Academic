@@ -698,6 +698,7 @@ The brain is not faster in raw arithmetic speed, but it is **architecturally sup
 
 > *The brain's power comes not from clock speed but from billions of simple units working in parallel — the same principle behind artificial neural networks.*
 
+
 ---
 
 ## Q8 — Compute Z without a transfer function.
@@ -724,43 +725,43 @@ The computation flows layer by layer:
 **Given:**
 ```
 X₁ = 17,  X₂ = 7,  X₃ = 12
-W₁ = 0.6  (X₁ → Y₁),  W₂ = 0.3  (X₂ → Y₁),  W₃ = 0.1  (X₃ → Y₂)
+W₁ = 0.6  (X₁ → Y₁),  W₂ = 0.3  (X₂ → Y₂),  W₃ = 0.1  (X₃ → Y₂)
 v₁ = 0.60 (Y₁ → Z),   v₂ = 0.45 (Y₂ → Z)
 ```
 
 **Network Diagram:**
 ```
-X₁(17) ──[0.6]──┐
-                  ├──► Y₁ ──[0.60]──┐
-X₂(7)  ──[0.3]──┘                   ├──► Z
-                                      │
-X₃(12) ──[0.1]────────► Y₂ ──[0.45]─┘
+X₁(17) ──[0.6]──────────► Y₁ ──[0.60]──┐
+                                          ├──► Z
+X₂(7)  ──[0.3]──┐                        │
+                  ├──► Y₂ ──[0.45]───────┘
+X₃(12) ──[0.1]──┘
 ```
 
 **Step 1 — Compute Y₁:**
 ```
-Y₁ = W₁×X₁ + W₂×X₂
-   = (0.6 × 17) + (0.3 × 7)
-   = 10.2 + 2.1
-   = 12.3
+Y₁ = W₁ × X₁
+   = 0.6 × 17
+   = 10.2
 ```
 
 **Step 2 — Compute Y₂:**
 ```
-Y₂ = W₃ × X₃
-   = 0.1 × 12
-   = 1.2
+Y₂ = W₂×X₂ + W₃×X₃
+   = (0.3 × 7) + (0.1 × 12)
+   = 2.1 + 1.2
+   = 3.3
 ```
 
 **Step 3 — Compute Z:**
 ```
 Z = v₁×Y₁ + v₂×Y₂
-  = (0.60 × 12.3) + (0.45 × 1.2)
-  = 7.38 + 0.54
-  = 7.92
+  = (0.60 × 10.2) + (0.45 × 3.3)
+  = 6.12 + 1.485
+  = 7.605
 ```
 
-> **✅ Answer: Z = 7.92**
+> **✅ Answer: Z = 7.605**
 
 ---
 
@@ -810,24 +811,24 @@ The threshold is applied **at every neuron** — hidden neurons first, then the 
 
 **Raw values from Q8:**
 ```
-Y₁_raw = 12.3
-Y₂_raw = 1.2
+Y₁_raw = 10.2
+Y₂_raw = 3.3
 ```
 
 **Step 1 — Apply Threshold to Hidden Neuron Y₁:**
 ```
-Y₁_raw = 12.3
+Y₁_raw = 10.2
 
-Check: Is 12.3 ≤ 5?  →  NO  (12.3 > 5)
+Check: Is 10.2 ≤ 5?  →  NO  (10.2 > 5)
 
 ∴  φ(Y₁) = 1
 ```
 
 **Step 2 — Apply Threshold to Hidden Neuron Y₂:**
 ```
-Y₂_raw = 1.2
+Y₂_raw = 3.3
 
-Check: Is 1.2 ≤ 5?  →  YES  (1.2 ≤ 5)
+Check: Is 3.3 ≤ 5?  →  YES  (3.3 ≤ 5)
 
 ∴  φ(Y₂) = 0
 ```
@@ -853,8 +854,8 @@ Check: Is 0.60 ≤ 5?  →  YES  (0.60 ≤ 5)
 
 | Neuron | Raw Value | Condition | Threshold Output |
 |--------|-----------|-----------|-----------------|
-| Y₁ | 12.3 | 12.3 > 5 | **1** |
-| Y₂ | 1.2 | 1.2 ≤ 5 | **0** |
+| Y₁ | 10.2 | 10.2 > 5 | **1** |
+| Y₂ | 3.3 | 3.3 ≤ 5 | **0** |
 | Z | 0.60 | 0.60 ≤ 5 | **0** |
 
 > **✅ Answer: Z = 0**
@@ -887,53 +888,53 @@ Properties:
 
 **Raw values from Q8:**
 ```
-Y₁_raw = 12.3
-Y₂_raw = 1.2
+Y₁_raw = 10.2
+Y₂_raw = 3.3
 ```
 
 **Step 1 — Sigmoid on Y₁:**
 ```
-φ(Y₁) = 1 / (1 + e^(−12.3))
-       = 1 / (1 + 0.0000045)
-       ≈ 0.9999955
+φ(Y₁) = 1 / (1 + e^(−10.2))
+       = 1 / (1 + 0.0000372)
+       ≈ 0.9999628
        ≈ 1.000
 ```
-*(e^−12.3 is extremely small → sigmoid ≈ 1)*
+*(e^−10.2 is extremely small → sigmoid ≈ 1)*
 
 **Step 2 — Sigmoid on Y₂:**
 ```
-φ(Y₂) = 1 / (1 + e^(−1.2))
-       = 1 / (1 + 0.3012)
-       = 1 / 1.3012
-       ≈ 0.7685
+φ(Y₂) = 1 / (1 + e^(−3.3))
+       = 1 / (1 + 0.03688)
+       = 1 / 1.03688
+       ≈ 0.9644
 ```
 
 **Step 3 — Compute Z_raw using sigmoid outputs:**
 ```
 Z_raw = v₁ × φ(Y₁) + v₂ × φ(Y₂)
-      = (0.60 × 1.000) + (0.45 × 0.7685)
-      = 0.600 + 0.3458
-      = 0.9458
+      = (0.60 × 1.000) + (0.45 × 0.9644)
+      = 0.600 + 0.4340
+      = 1.034
 ```
 
 **Step 4 — Sigmoid on Z:**
 ```
-φ(Z) = 1 / (1 + e^(−0.9458))
-     = 1 / (1 + 0.3885)
-     = 1 / 1.3885
-     ≈ 0.720
+φ(Z) = 1 / (1 + e^(−1.034))
+     = 1 / (1 + 0.3557)
+     = 1 / 1.3557
+     ≈ 0.7377
 ```
 
 **Summary Table:**
 
 | Neuron | Raw Value | Sigmoid Output |
 |--------|-----------|----------------|
-| Y₁ | 12.3 | ≈ 1.000 |
-| Y₂ | 1.2 | ≈ 0.7685 |
-| Z_raw | 0.9458 | — |
-| Z_final | — | ≈ **0.720** |
+| Y₁ | 10.2 | ≈ 1.000 |
+| Y₂ | 3.3 | ≈ 0.9644 |
+| Z_raw | 1.034 | — |
+| Z_final | — | ≈ **0.738** |
 
-> **✅ Answer: Z ≈ 0.720**
+> **✅ Answer: Z ≈ 0.738**
 
 ---
 
@@ -992,6 +993,10 @@ Where `d` = the desired/target output given in the exam diagram.
 > *If no desired output `d` is given in your exam diagram, compute Z from Step 1 and write the MSE formula stating that E = (1/2)(d − Z)².*
 
 ---
+
+---
+
+Note: Since W₂ now connects X₂ → Y₂ (not Y₁), the network topology changed — Y₁ only receives X₁ via W₁, and Y₂ receives both X₂ and X₃. All downstream values in Q9, Q10, and Q11 were recalculated accordingly.
 
 # PART B — BAYESIAN NETWORKS
 
