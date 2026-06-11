@@ -13,6 +13,9 @@
 3. [ANN Architecture (Layers & Structure)](#3-ann-architecture-layers--structure)
 4. [Activation / Transfer Functions](#4-activation--transfer-functions)
 5. [Compute Z — Exam Problems Fully Solved](#5-compute-z--exam-problems-fully-solved)
+   - Part i: Without Transfer Function
+   - **Part ii: With Threshold Function — 4th Sem Q5(d)-ii *(Solved Separately)***
+   - Part iii: With Sigmoid Function
 6. [Types of Learning](#6-types-of-learning)
 7. [Neural Network Quick-Reference](#7-neural-network-quick-reference)
 
@@ -327,22 +330,75 @@ Z = v₁×Y₁ + v₂×Y₂
 
 ---
 
-#### Part (ii): Z WITH Threshold Function (θ = 5 → output 0 if ≤5, else 1)
+#### Part (ii): Z WITH Threshold Function — 4th Sem Q5(d)-ii *(Solved Separately)*
 
-Apply threshold at each hidden neuron first, then at output:
+> **Exam Question (4th Sem Q5(d)-ii / 6th Sem Q6(b)-ii):**
+> *"Compare the value of Z with a threshold function. If the value is 5 or less → output 0, otherwise → output 1."*
 
+---
+
+**Threshold (Step) Function Rule:**
 ```
-Y₁ raw = 12.3  →  12.3 > 5  →  Y₁ = 1
-Y₂ raw = 1.2   →  1.2  ≤ 5  →  Y₂ = 0
-
-Z raw  = (0.60 × 1) + (0.45 × 0)
-       = 0.60 + 0
-       = 0.60
-
-Z = 0.60  →  0.60 ≤ 5  →  Z = 0
+φ(net) = 0    if  net ≤ 5   (threshold θ = 5)
+φ(net) = 1    if  net > 5
 ```
 
-> **Answer (ii): Z = 0**
+**Given values (from Part i):**
+```
+Y₁ raw = 12.3    (computed in Part i)
+Y₂ raw = 1.2     (computed in Part i)
+```
+
+---
+
+**Step 1 — Apply Threshold to Hidden Neuron Y₁:**
+```
+Y₁_raw = 12.3
+
+Check: Is 12.3 ≤ 5?  →  NO  (12.3 > 5)
+
+∴  φ(Y₁) = 1
+```
+
+**Step 2 — Apply Threshold to Hidden Neuron Y₂:**
+```
+Y₂_raw = 1.2
+
+Check: Is 1.2 ≤ 5?  →  YES  (1.2 ≤ 5)
+
+∴  φ(Y₂) = 0
+```
+
+**Step 3 — Compute Raw Weighted Sum at Output Neuron Z:**
+```
+Z_raw = v₁ × φ(Y₁) + v₂ × φ(Y₂)
+      = (0.60 × 1) + (0.45 × 0)
+      = 0.60 + 0.00
+      = 0.60
+```
+
+**Step 4 — Apply Threshold to Output Neuron Z:**
+```
+Z_raw = 0.60
+
+Check: Is 0.60 ≤ 5?  →  YES  (0.60 ≤ 5)
+
+∴  φ(Z) = 0
+```
+
+---
+
+**Summary Table:**
+
+| Neuron | Raw Value | Condition | Threshold Output |
+|--------|-----------|-----------|-----------------|
+| Y₁     | 12.3      | 12.3 > 5  | **1**           |
+| Y₂     | 1.2       | 1.2 ≤ 5   | **0**           |
+| Z      | 0.60      | 0.60 ≤ 5  | **0**           |
+
+> **✅ Answer (ii): Z = 0**
+>
+> *The final output Z after applying the threshold function (θ = 5) at all neurons is **0**.*
 
 ---
 
