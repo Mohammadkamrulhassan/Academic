@@ -77,7 +77,8 @@ A **neuron** is the fundamental structural and functional unit of both the biolo
 **Biological Neuron:**
 A nerve cell in the human brain that receives electrical/chemical signals through **dendrites**, processes them in the **cell body (soma)**, and transmits the result through the **axon** to the next neuron. The human brain contains approximately **86 billion** neurons, each connected to thousands of others.
 
-<img width="415" height="220" alt="image" src="https://github.com/user-attachments/assets/a39b31e4-a0a2-430f-b4d4-183c51e8ad6e" />
+![Biological Neuron — Labeled Diagram (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Neuron_Hand-tuned.svg/1024px-Neuron_Hand-tuned.svg.png)
+*Fig 1: Labeled diagram of a biological neuron — dendrites receive signals, cell body processes them, axon transmits output. (Source: Wikipedia Commons, CC BY-SA)*
 
 ```
         Dendrites                    Axon Terminals
@@ -482,7 +483,8 @@ Training Data:  (X₁,Y₁), (X₂,Y₂), ..., (Xₙ,Yₙ)
           New input X_new → Predict Y_new
 ```
 
-<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/8c5b5740-fa40-4ce7-96ce-feae71f081c0" />
+![Supervised Learning Diagram (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Supervised_learning_illustration.png/800px-Supervised_learning_illustration.png)
+*Fig 2: Supervised learning — model trained on labeled input-output pairs (X, Y). (Source: Wikipedia Commons, CC BY-SA)*
 
 | Feature | Detail |
 |---------|--------|
@@ -508,7 +510,8 @@ Unlabeled Data: X₁, X₂, X₃, ..., Xₙ
           Clusters / Patterns / Groups
 ```
 
-<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/462431a5-279e-44f7-b278-88ef78999ea1" />
+![Unsupervised Learning — K-Means Clustering (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/K-means_convergence.gif/617px-K-means_convergence.gif)
+*Fig 3: Unsupervised learning — K-Means clustering discovers groups in unlabeled data without any pre-defined labels. (Source: Wikipedia Commons, CC BY-SA)*
 
 | Feature | Detail |
 |---------|--------|
@@ -526,7 +529,8 @@ Unlabeled Data: X₁, X₂, X₃, ..., Xₙ
 
 An **agent** learns by interacting with an **environment** and receiving **rewards** or **penalties** for its actions.
 
-<img width="1200" height="628" alt="image" src="https://github.com/user-attachments/assets/2142a504-527c-4ad7-ae50-05f78217478d" />
+![Reinforcement Learning Agent-Environment Loop (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Reinforcement_learning_diagram.svg/800px-Reinforcement_learning_diagram.svg.png)
+*Fig 4: Reinforcement learning — agent takes actions in environment, receives state and reward, updates policy. (Source: Wikipedia Commons, CC BY-SA)*
 
 ```
    ┌─────────┐   Action a    ┌─────────────┐
@@ -795,7 +799,8 @@ For this exam question, **θ = 5**:
 
 The threshold is applied **at every neuron** — hidden neurons first, then the output neuron.
 
-<img width="1267" height="906" alt="image" src="https://github.com/user-attachments/assets/b5cedb25-a26a-43c9-8a7d-9f90ec4c084f" />
+![Heaviside Step Function Graph (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Dirac_distribution_CDF.svg/800px-Dirac_distribution_CDF.svg.png)
+*Fig 5: Threshold (Step/Heaviside) activation function — output is 0 below threshold θ, jumps to 1 above it. (Source: Wikipedia Commons, CC BY-SA)*
 
 ---
 
@@ -867,7 +872,8 @@ The **sigmoid** (logistic) function maps any real number to a smooth output betw
 φ(net) = 1 / (1 + e^(−net))    Range: (0, 1)
 ```
 
-<img width="856" height="554" alt="image" src="https://github.com/user-attachments/assets/05e18e7a-59dd-42de-b7d1-a1be7887e573" />
+![Sigmoid (Logistic) Function Graph (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Logistic-curve.svg/800px-Logistic-curve.svg.png)
+*Fig 6: Sigmoid (logistic) function φ(x) = 1/(1+e⁻ˣ) — smooth S-curve mapping any input to (0,1). (Source: Wikipedia Commons, CC BY-SA)*
 
 Properties:
 - Output is always between 0 and 1 — interpretable as probability
@@ -949,7 +955,8 @@ Where:
 - `y` = actual network output
 - The `(1/2)` factor is a convenience that cancels when differentiating (used in backprop)
 
-<img width="1200" height="675" alt="image" src="https://github.com/user-attachments/assets/8c5f589f-30b8-4d66-a673-be9a60f2f5a9" />
+![Mean Squared Error Loss Function (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Cost_functions.svg/800px-Cost_functions.svg.png)
+*Fig 7: Mean Squared Error (MSE) loss — measures distance between predicted output y and desired output d; E=(1/2)(d−y)². (Source: Wikipedia Commons, CC BY-SA)*
 
 **"Compute Z with MSE at all neurons"** means:
 1. First compute raw Z (no activation function — same as Q8)
@@ -1032,7 +1039,8 @@ A **Bayesian Network (BN)** is a probabilistic graphical model that represents v
 
 **Network DAG:**
 
-<img width="640" height="480" alt="image" src="https://github.com/user-attachments/assets/a8c39e04-b070-41e9-9e09-9c88e7af0278" />
+![Bayesian Network DAG Example (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/SimpleBayesNet.svg/800px-SimpleBayesNet.svg.png)
+*Fig 8: Bayesian Network — Directed Acyclic Graph (DAG) where nodes are variables, edges represent causal influence, and each node has a Conditional Probability Table (CPT). (Source: Wikipedia Commons, CC BY-SA)*
 
 ```
     ┌───────────┐              ┌────────────┐
@@ -1288,7 +1296,8 @@ P(¬E)             = 0.998
 | `Z = v₁Y₁ + v₂Y₂` | Output neuron (no activation) |
 | `Z_sigmoid = 1/(1 + e^−Z_raw)` | Z after sigmoid |
 
-<img width="1001" height="471" alt="image" src="https://github.com/user-attachments/assets/bc8041c9-4b6f-4c58-b8ff-c5196b3c8fdb" />
+![Artificial Neural Network Architecture — Multi-Layer Perceptron (Wikipedia Commons)](https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Colored_neural_network.svg/800px-Colored_neural_network.svg.png)
+*Fig 9: ANN feed-forward architecture — input layer (blue), hidden layer (green), output layer (orange). Each neuron computes weighted sum then applies activation function. (Source: Wikipedia Commons, CC BY-SA)*
 
 ### Bayesian Network Quick-Reference
 
