@@ -306,7 +306,21 @@ Training data (X, label) → ANN learns weights → New input X → Predicted la
 ### Concept: Types of Knowledge in Neural Networks
 
 To build an effective neural network, four types of knowledge are used:
+# Neural Network Keywords
 
+| # | Category | Keywords |
+|---|----------|----------|
+| 1 | **Math & Theory** | Scalar, Vector, Matrix, Tensor, Dot Product, Matrix Multiplication, Gradient, Derivative, Partial Derivative, Chain Rule, Jacobian, Hessian, Eigenvalue, Eigenvector, Probability Distribution, Expectation, Variance, Bayes' Theorem, MLE, MAP, Convexity, Saddle Point |
+| 2 | **Architecture** | Neuron, Perceptron, Layer, Input Layer, Hidden Layer, Output Layer, Fully Connected (Dense) Layer, Convolutional Layer (Conv1D/2D/3D), Recurrent Layer, LSTM, GRU, Transformer, Attention, Self-Attention, Multi-Head Attention, Encoder, Decoder, Embedding Layer, Pooling (Max/Avg/Global), Dropout Layer, BatchNorm, LayerNorm, GroupNorm, Residual Connection, Skip Connection, Bottleneck, Depthwise Convolution |
+| 3 | **Activation Functions** | ReLU, Leaky ReLU, PReLU, GELU, Swish, Mish, Sigmoid, Tanh, Softmax, Log-Softmax, ELU, SELU |
+| 4 | **Training** | Forward Pass, Backward Pass, Backpropagation, Loss Function, Cost Function, MSE, Cross-Entropy Loss, Binary Cross-Entropy, KL Divergence, GD, SGD, Mini-Batch, Adam, AdamW, RMSProp, Momentum, Learning Rate, LR Schedule, Warmup, Cosine Decay, Step Decay, Xavier Init, He Init, Glorot Init, Gradient Clipping, Vanishing Gradient, Exploding Gradient, Epoch, Iteration, Batch, Checkpoint, Early Stopping |
+| 5 | **Regularization** | Overfitting, Underfitting, Bias-Variance Tradeoff, L1 Regularization (Lasso), L2 Regularization (Ridge), Weight Decay, Dropout, Data Augmentation, Label Smoothing, Mixup, CutMix |
+| 6 | **Data** | Dataset, Dataloader, Train/Val/Test Split, Normalization, Standardization, One-Hot Encoding, Tokenization, Padding, Truncation, Class Imbalance, Oversampling, Undersampling, Data Leakage, Feature Extraction, Feature Engineering |
+| 7 | **Evaluation** | Accuracy, Precision, Recall, F1-Score, ROC Curve, AUC, Confusion Matrix, Perplexity, BLEU, ROUGE, MAE |
+| 8 | **Optimization & Efficiency** | Hyperparameter Tuning, Grid Search, Random Search, Bayesian Optimization, Mixed Precision (fp16/bf16), Gradient Accumulation, Quantization (INT8/INT4), Pruning, Knowledge Distillation, LoRA, QLoRA, Adapter |
+| 9 | **Frameworks & Tools** | PyTorch, TensorFlow, Keras, JAX, CUDA, cuDNN, TensorBoard, Weights & Biases (W&B), ONNX, Hugging Face Transformers, DataLoader, Dataset class |
+| 10 | **Model Types** | CNN, RNN, LSTM, GRU, Transformer, BERT, GPT, Autoencoder, VAE, GAN, Generator, Discriminator, Diffusion Model, GNN, Siamese Network |
+| 11 | **Advanced Concepts** | Transfer Learning, Fine-Tuning, Pre-training, Domain Adaptation, Zero-shot, Few-shot, One-shot Learning, Self-supervised Learning, Contrastive Learning, RLHF, Prompt Tuning, Prefix Tuning, PEFT, Inference, Latency, Throughput, Model Parallelism, Data Parallelism |
 ---
 
 **① Prior Knowledge (Domain Knowledge)**
