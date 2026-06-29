@@ -1,16 +1,16 @@
 # Data Communication Project
-## LoRa SX1278 433MHz — 3 Team Full Communication
+## LoRa SX1278 433MHz — 3 Team Full Communication + Environmental Sensors
 ### Course: Data Communication | Arduino UNO & ESP32
 
 ---
 
 # Team Overview
 
-| Team | Hardware | LoRa Module | Level Converter | Role |
-|---|---|---|---|---|
-| **Team A** | ESP32 NodeMCU 30P | Ra-01 SX1278 433MHz | Not needed | Send & Receive |
-| **Team B** | Arduino UNO | Ra-01 SX1278 433MHz | 8CH Bi-Directional | Send & Receive |
-| **Team C** | Arduino UNO | Ra-01 SX1278 433MHz | 8CH Bi-Directional | Send & Receive |
+| Team | Hardware | LoRa Module | Level Converter | Sensor | Role |
+|---|---|---|---|---|---|
+| **Team A (Maruf)** | ESP32 NodeMCU 30P | Ra-01 SX1278 433MHz | Not needed | MP-135/MP503 Air Quality (analog) | Send & Receive |
+| **Team B (Abid)** | Arduino UNO | Ra-01 SX1278 433MHz | 8CH Bi-Directional | TSL2561 Luminosity/IR (I2C) | Send & Receive |
+| **Team C (Joyanta)** | Arduino UNO | Ra-01 SX1278 433MHz | 8CH Bi-Directional | AHT20+BMP280 Temp/Humidity/Pressure (I2C) | Send & Receive |
 
 ---
 
@@ -30,7 +30,7 @@ LoRa works like a **radio broadcast**. Anyone tuned to the same frequency and sy
         /              \
        sends           receives
       /                    \
-Team C (Arduino) ←→ Team B (Arduino)
+Team C/Joyanta (Arduino) ←→ Team B/Abid (Arduino)
        \                    /
        receives           sends
         \              /
@@ -52,13 +52,13 @@ Every team can SEND to all others and RECEIVE from all others at the same time.
 | Coding Rate | **4/5** (default) | Do not change |
 | TX Power | **17 dBm** (default) | Can adjust if needed |
 | Library | **LoRa by Sandeep Mistry** | All teams use this |
-| Serial Baud — Arduino | **9600** | Team B & C |
-| Serial Baud — ESP32 | **115200** | Team A only |
+| Serial Baud — Arduino | **9600** | Team B (Abid) & Team C (Joyanta) |
+| Serial Baud — ESP32 | **115200** | Team A (Maruf) only |
 | SPI Mode | **Mode 0** (handled by library) | Auto |
 
 ---
 
-# Why Level Converter? (Team B & C Only)
+# Why Level Converter? (Team B/Abid & Team C/Joyanta Only)
 
 ```
 Arduino UNO  →  5V logic
@@ -84,7 +84,7 @@ Arduino (5V) [B side] ════ [A side] Ra-01 (3.3V)
 
 ---
 
-# TEAM A — ESP32 NodeMCU 30P
+# TEAM A (MARUF) — ESP32 NodeMCU 30P
 
 ## Wiring (No Level Converter Needed)
 
@@ -122,7 +122,52 @@ RST pin    : 14
 DIO0 pin   : 2
 ```
 
-## Team A — Sender Code (ESP32)
+---
+
+## SENSOR ADD-ON — MP-135 / MP503 Air Quality Sensor (Team A / Maruf)
+
+### Sensor Facts
+- **Type:** Analog only (no I2C/digital data line) — outputs a voltage on the **AO** pin proportional to gas concentration
+- **Power:** 5V (some breakout boards tolerate 3.3V–5V, but 5V gives correct reference range — check your board's VCC label)
+- **Pins on module:** `VCC`, `GND`, `AO` (analog out), `DO` (digital threshold out — not used here)
+- **Preheat:** sensor needs ~20–60s after power-on before readings stabilize
+
+### Wiring (ESP32)
+
+| MP503 Pin | ESP32 Pin | Note |
+|---|---|---|
+| VCC | 5V (VIN) | Use the 5V pin, not 3.3V |
+| GND | GND | Common ground |
+| AO | GPIO34 (ADC1_CH6) | Analog read — input-only pin, ADC1 (safe, doesn't conflict with WiFi/LoRa) |
+| DO | Not connected | Digital threshold pin, unused in this project |
+
+```
+[ESP32 NodeMCU 30P]                [MP503 Module]
+    ├── 5V   ──────────────────→ VCC
+    ├── GND  ──────────────────→ GND
+    └── D34  ──────────────────→ AO
+                                  DO ── (not connected)
+```
+
+**Why GPIO34?** It's an ADC1 input-only pin. ADC2 pins share hardware with WiFi and can give unreliable readings if WiFi is ever active — ADC1 avoids that entirely, and GPIO34 isn't used anywhere else in the LoRa wiring.
+
+### Combined Pin Map — Team A (Maruf)
+
+| Function | ESP32 Pin |
+|---|---|
+| LoRa NSS | GPIO5 |
+| LoRa SCK | GPIO18 |
+| LoRa MISO | GPIO19 |
+| LoRa MOSI | GPIO23 |
+| LoRa RST | GPIO14 |
+| LoRa DIO0 | GPIO2 |
+| MP503 AO | GPIO34 |
+| MP503 VCC | 5V |
+| MP503 GND | GND |
+
+---
+
+## Team A (Maruf) — Sender Code (ESP32)
 
 ```cpp
 #include <SPI.h>
@@ -137,6 +182,10 @@ DIO0 pin   : 2
 #define FREQUENCY   433E6
 #define SYNC_WORD   0x12
 #define BAUD_RATE   115200
+
+// ---- MP503 Air Quality Sensor ----
+#define MP503_AO_PIN 34   // ADC1_CH6, input-only pin
+#define PREHEAT_TIME 20000  // 20s warm-up before first reliable reading
 
 int counter = 0;
 
@@ -145,30 +194,39 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team A] LoRa init FAILED! Check wiring.");
+    Serial.println("[Maruf-A] LoRa init FAILED! Check wiring.");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team A] ESP32 Sender Ready");
-  Serial.println("Sending to Team B and Team C...");
+  Serial.println("[Maruf-A] ESP32 Sender Ready");
+  Serial.println("Sending to Team B (Abid) and Team C (Joyanta)...");
+
+  Serial.println("[Maruf-A] Preheating MP503 sensor (20s)...");
+  delay(PREHEAT_TIME);
+  Serial.println("[Maruf-A] MP503 ready.");
 }
 
 void loop() {
   counter++;
 
-  String message = "Hello from TeamA | Packet #" + String(counter);
+  int airRaw = analogRead(MP503_AO_PIN);          // 0-4095 (ESP32 ADC is 12-bit)
+  float airVoltage = airRaw * (3.3 / 4095.0);      // convert to volts
+
+  String message = "Maruf-A | Packet #" + String(counter) +
+                    " | AirQuality_Raw=" + String(airRaw) +
+                    " | AirQuality_V=" + String(airVoltage, 2);
 
   LoRa.beginPacket();
   LoRa.print(message);
   LoRa.endPacket();
 
-  Serial.println("[Team A] Sent: " + message);
+  Serial.println("[Maruf-A] Sent: " + message);
   delay(3000);
 }
 ```
 
-## Team A — Receiver Code (ESP32)
+## Team A (Maruf) — Receiver Code (ESP32)
 
 ```cpp
 #include <SPI.h>
@@ -189,13 +247,13 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team A] LoRa init FAILED! Check wiring.");
+    Serial.println("[Maruf-A] LoRa init FAILED! Check wiring.");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team A] ESP32 Receiver Ready");
-  Serial.println("Listening for Team B and Team C...");
+  Serial.println("[Maruf-A] ESP32 Receiver Ready");
+  Serial.println("Listening for Team B (Abid) and Team C (Joyanta)...");
 }
 
 void loop() {
@@ -206,7 +264,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Team A] Received: ");
+    Serial.print("[Maruf-A] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -215,7 +273,7 @@ void loop() {
 }
 ```
 
-## Team A — Sender + Receiver Together (ESP32)
+## Team A (Maruf) — Sender + Receiver Together (ESP32)
 
 ```cpp
 #include <SPI.h>
@@ -230,6 +288,10 @@ void loop() {
 #define FREQUENCY   433E6
 #define SYNC_WORD   0x12
 #define BAUD_RATE   115200
+
+// ---- MP503 Air Quality Sensor ----
+#define MP503_AO_PIN 34
+#define PREHEAT_TIME 20000
 
 int counter = 0;
 unsigned long lastSendTime = 0;
@@ -240,12 +302,16 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team A] LoRa init FAILED!");
+    Serial.println("[Maruf-A] LoRa init FAILED!");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team A] ESP32 Send+Receive Ready");
+  Serial.println("[Maruf-A] ESP32 Send+Receive Ready");
+
+  Serial.println("[Maruf-A] Preheating MP503 sensor (20s)...");
+  delay(PREHEAT_TIME);
+  Serial.println("[Maruf-A] MP503 ready.");
 }
 
 void loop() {
@@ -256,7 +322,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Team A] Received: ");
+    Serial.print("[Maruf-A] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -267,11 +333,18 @@ void loop() {
   if (millis() - lastSendTime > SEND_INTERVAL) {
     lastSendTime = millis();
     counter++;
-    String message = "Hello from TeamA | Packet #" + String(counter);
+
+    int airRaw = analogRead(MP503_AO_PIN);
+    float airVoltage = airRaw * (3.3 / 4095.0);
+
+    String message = "Maruf-A | Packet #" + String(counter) +
+                      " | AirQuality_Raw=" + String(airRaw) +
+                      " | AirQuality_V=" + String(airVoltage, 2);
+
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
-    Serial.println("[Team A] Sent: " + message);
+    Serial.println("[Maruf-A] Sent: " + message);
   }
 }
 ```
@@ -280,7 +353,7 @@ void loop() {
 
 ---
 
-# TEAM B — Arduino UNO + Level Converter
+# TEAM B (ABID) — Arduino UNO + Level Converter
 
 ## Wiring
 
@@ -342,11 +415,63 @@ RST pin    : 9
 DIO0 pin   : 8
 ```
 
-## Team B — Sender Code (Arduino)
+---
+
+## SENSOR ADD-ON — TSL2561 Luminosity/IR Sensor (Team B / Abid)
+
+### Sensor Facts
+- **Type:** I2C digital sensor (no analog wiring needed)
+- **Power:** 3.3V or 5V (module has onboard regulator — check your breakout's silkscreen, most accept both)
+- **I2C Address:** `0x39` default (some boards: `0x29` or `0x49` depending on ADDR pin strap)
+- **Library:** Adafruit TSL2561 + Adafruit Unified Sensor (install both via Library Manager)
+
+### Wiring (Arduino UNO)
+
+| TSL2561 Pin | Arduino UNO Pin | Note |
+|---|---|---|
+| VCC | 3.3V or 5V | Check breakout's input voltage range |
+| GND | GND | Common ground |
+| SDA | A4 | I2C data line |
+| SCL | A5 | I2C clock line |
+
+```
+[Arduino UNO]                  [TSL2561 Module]
+    ├── 3.3V/5V ─────────────→ VCC
+    ├── GND     ─────────────→ GND
+    ├── A4 (SDA) ────────────→ SDA
+    └── A5 (SCL) ────────────→ SCL
+```
+
+**Note on shared bus:** A4/A5 are not used anywhere else in Team B's LoRa wiring (which uses D8–D13), so there's no pin conflict. If you add more I2C sensors later, they can share the same SDA/SCL lines (each I2C device needs a unique address).
+
+### Combined Pin Map — Team B (Abid)
+
+| Function | Arduino Pin |
+|---|---|
+| LoRa SCK | D13 (via converter) |
+| LoRa MISO | D12 (via converter) |
+| LoRa MOSI | D11 (via converter) |
+| LoRa NSS | D10 (via converter) |
+| LoRa RST | D9 (via converter) |
+| LoRa DIO0 | D8 (via converter) |
+| TSL2561 SDA | A4 (direct, no converter — 3.3V/5V tolerant) |
+| TSL2561 SCL | A5 (direct, no converter) |
+
+### Arduino Library Setup (Team B only)
+1. Arduino IDE → Tools → Manage Libraries
+2. Search **"Adafruit TSL2561"** → Install
+3. It will prompt to also install **"Adafruit Unified Sensor"** → accept
+
+---
+
+## Team B (Abid) — Sender Code (Arduino)
 
 ```cpp
 #include <SPI.h>
 #include <LoRa.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
 
 // ---- Pin Config ----
 #define SS   10
@@ -357,6 +482,9 @@ DIO0 pin   : 8
 #define FREQUENCY   433E6
 #define SYNC_WORD   0x12
 #define BAUD_RATE   9600
+
+// ---- TSL2561 Sensor ----
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
 int counter = 0;
 
@@ -365,30 +493,41 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team B] LoRa init FAILED! Check wiring.");
+    Serial.println("[Abid-B] LoRa init FAILED! Check wiring.");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team B] Arduino Sender Ready");
-  Serial.println("Sending to Team A and Team C...");
+  Serial.println("[Abid-B] Arduino Sender Ready");
+  Serial.println("Sending to Team A (Maruf) and Team C (Joyanta)...");
+
+  if (!tsl.begin()) {
+    Serial.println("[Abid-B] TSL2561 NOT FOUND! Check I2C wiring.");
+    while (1);
+  }
+  tsl.enableAutoRange(true);
+  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
+  Serial.println("[Abid-B] TSL2561 ready.");
 }
 
 void loop() {
   counter++;
 
-  String message = "Hello from TeamB | Packet #" + String(counter);
+  uint16_t lux = tsl.getLuminosity(TSL2561_VISIBLE);
+
+  String message = "Abid-B | Packet #" + String(counter) +
+                    " | Lux=" + String(lux);
 
   LoRa.beginPacket();
   LoRa.print(message);
   LoRa.endPacket();
 
-  Serial.println("[Team B] Sent: " + message);
+  Serial.println("[Abid-B] Sent: " + message);
   delay(3000);
 }
 ```
 
-## Team B — Receiver Code (Arduino)
+## Team B (Abid) — Receiver Code (Arduino)
 
 ```cpp
 #include <SPI.h>
@@ -409,13 +548,13 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team B] LoRa init FAILED! Check wiring.");
+    Serial.println("[Abid-B] LoRa init FAILED! Check wiring.");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team B] Arduino Receiver Ready");
-  Serial.println("Listening for Team A and Team C...");
+  Serial.println("[Abid-B] Arduino Receiver Ready");
+  Serial.println("Listening for Team A (Maruf) and Team C (Joyanta)...");
 }
 
 void loop() {
@@ -426,7 +565,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Team B] Received: ");
+    Serial.print("[Abid-B] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -435,11 +574,14 @@ void loop() {
 }
 ```
 
-## Team B — Sender + Receiver Together (Arduino)
+## Team B (Abid) — Sender + Receiver Together (Arduino)
 
 ```cpp
 #include <SPI.h>
 #include <LoRa.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
 
 // ---- Pin Config ----
 #define SS   10
@@ -450,6 +592,9 @@ void loop() {
 #define FREQUENCY   433E6
 #define SYNC_WORD   0x12
 #define BAUD_RATE   9600
+
+// ---- TSL2561 Sensor ----
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
 int counter = 0;
 unsigned long lastSendTime = 0;
@@ -460,12 +605,20 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team B] LoRa init FAILED!");
+    Serial.println("[Abid-B] LoRa init FAILED!");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team B] Arduino Send+Receive Ready");
+  Serial.println("[Abid-B] Arduino Send+Receive Ready");
+
+  if (!tsl.begin()) {
+    Serial.println("[Abid-B] TSL2561 NOT FOUND! Check I2C wiring.");
+    while (1);
+  }
+  tsl.enableAutoRange(true);
+  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
+  Serial.println("[Abid-B] TSL2561 ready.");
 }
 
 void loop() {
@@ -476,7 +629,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Team B] Received: ");
+    Serial.print("[Abid-B] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -487,11 +640,16 @@ void loop() {
   if (millis() - lastSendTime > SEND_INTERVAL) {
     lastSendTime = millis();
     counter++;
-    String message = "Hello from TeamB | Packet #" + String(counter);
+
+    uint16_t lux = tsl.getLuminosity(TSL2561_VISIBLE);
+
+    String message = "Abid-B | Packet #" + String(counter) +
+                      " | Lux=" + String(lux);
+
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
-    Serial.println("[Team B] Sent: " + message);
+    Serial.println("[Abid-B] Sent: " + message);
   }
 }
 ```
@@ -500,11 +658,11 @@ void loop() {
 
 ---
 
-# TEAM C — Arduino UNO + Level Converter
+# TEAM C (JOYANTA) — Arduino UNO + Level Converter
 
 ## Wiring
 
-Exact same as Team B — refer to Team B wiring section.
+Exact same as Team B (Abid) — refer to Team B wiring section.
 
 ## Configuration
 ```
@@ -516,11 +674,63 @@ RST pin    : 9
 DIO0 pin   : 8
 ```
 
-## Team C — Sender Code (Arduino)
+---
+
+## SENSOR ADD-ON — AHT20 + BMP280 (Team C / Joyanta)
+
+### Sensor Facts
+- **Type:** I2C digital sensor — actually two chips on one breakout (AHT20 for temp/humidity, BMP280 for temp/pressure)
+- **Power:** 3.3V or 5V (most breakouts have onboard regulator — confirm via silkscreen)
+- **I2C Addresses:** AHT20 = `0x38`, BMP280 = `0x76` (or `0x77` if address pin strapped high) — no conflict, both share the same SDA/SCL bus
+- **Library:** Adafruit AHTX0 (for AHT20) + Adafruit BMP280 (for BMP280), both via Library Manager
+
+### Wiring (Arduino UNO)
+
+| Module Pin | Arduino UNO Pin | Note |
+|---|---|---|
+| VCC | 3.3V or 5V | Check breakout's input voltage range |
+| GND | GND | Common ground |
+| SDA | A4 | I2C data line (shared bus) |
+| SCL | A5 | I2C clock line (shared bus) |
+
+```
+[Arduino UNO]                  [AHT20+BMP280 Module]
+    ├── 3.3V/5V ─────────────→ VCC
+    ├── GND     ─────────────→ GND
+    ├── A4 (SDA) ────────────→ SDA
+    └── A5 (SCL) ────────────→ SCL
+```
+
+**Note:** Same I2C bus pattern as Team B — A4/A5 don't conflict with the LoRa SPI wiring (D8–D13), so wiring is a direct drop-in addition.
+
+### Combined Pin Map — Team C (Joyanta)
+
+| Function | Arduino Pin |
+|---|---|
+| LoRa SCK | D13 (via converter) |
+| LoRa MISO | D12 (via converter) |
+| LoRa MOSI | D11 (via converter) |
+| LoRa NSS | D10 (via converter) |
+| LoRa RST | D9 (via converter) |
+| LoRa DIO0 | D8 (via converter) |
+| AHT20/BMP280 SDA | A4 (direct, no converter) |
+| AHT20/BMP280 SCL | A5 (direct, no converter) |
+
+### Arduino Library Setup (Team C only)
+1. Arduino IDE → Tools → Manage Libraries
+2. Search **"Adafruit AHTX0"** → Install
+3. Search **"Adafruit BMP280"** → Install (accept the **Adafruit BusIO** dependency prompt if shown)
+
+---
+
+## Team C (Joyanta) — Sender Code (Arduino)
 
 ```cpp
 #include <SPI.h>
 #include <LoRa.h>
+#include <Wire.h>
+#include <Adafruit_AHTX0.h>
+#include <Adafruit_BMP280.h>
 
 // ---- Pin Config ----
 #define SS   10
@@ -531,6 +741,10 @@ DIO0 pin   : 8
 #define FREQUENCY   433E6
 #define SYNC_WORD   0x12
 #define BAUD_RATE   9600
+
+// ---- AHT20 + BMP280 Sensors ----
+Adafruit_AHTX0 aht;
+Adafruit_BMP280 bmp;
 
 int counter = 0;
 
@@ -539,30 +753,47 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team C] LoRa init FAILED! Check wiring.");
+    Serial.println("[Joyanta-C] LoRa init FAILED! Check wiring.");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team C] Arduino Sender Ready");
-  Serial.println("Sending to Team A and Team B...");
+  Serial.println("[Joyanta-C] Arduino Sender Ready");
+  Serial.println("Sending to Team A (Maruf) and Team B (Abid)...");
+
+  if (!aht.begin()) {
+    Serial.println("[Joyanta-C] AHT20 NOT FOUND! Check I2C wiring.");
+    while (1);
+  }
+  if (!bmp.begin(0x76)) {  // try 0x77 instead if this fails on your board
+    Serial.println("[Joyanta-C] BMP280 NOT FOUND! Check I2C wiring/address.");
+    while (1);
+  }
+  Serial.println("[Joyanta-C] AHT20 + BMP280 ready.");
 }
 
 void loop() {
   counter++;
 
-  String message = "Hello from TeamC | Packet #" + String(counter);
+  sensors_event_t humidity, temp;
+  aht.getEvent(&humidity, &temp);
+  float pressure = bmp.readPressure() / 100.0F;  // Pa -> hPa
+
+  String message = "Joyanta-C | Packet #" + String(counter) +
+                    " | Temp=" + String(temp.temperature, 1) + "C" +
+                    " | Hum=" + String(humidity.relative_humidity, 1) + "%" +
+                    " | Pres=" + String(pressure, 1) + "hPa";
 
   LoRa.beginPacket();
   LoRa.print(message);
   LoRa.endPacket();
 
-  Serial.println("[Team C] Sent: " + message);
+  Serial.println("[Joyanta-C] Sent: " + message);
   delay(3000);
 }
 ```
 
-## Team C — Receiver Code (Arduino)
+## Team C (Joyanta) — Receiver Code (Arduino)
 
 ```cpp
 #include <SPI.h>
@@ -583,13 +814,13 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team C] LoRa init FAILED! Check wiring.");
+    Serial.println("[Joyanta-C] LoRa init FAILED! Check wiring.");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team C] Arduino Receiver Ready");
-  Serial.println("Listening for Team A and Team B...");
+  Serial.println("[Joyanta-C] Arduino Receiver Ready");
+  Serial.println("Listening for Team A (Maruf) and Team B (Abid)...");
 }
 
 void loop() {
@@ -600,7 +831,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Team C] Received: ");
+    Serial.print("[Joyanta-C] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -609,11 +840,14 @@ void loop() {
 }
 ```
 
-## Team C — Sender + Receiver Together (Arduino)
+## Team C (Joyanta) — Sender + Receiver Together (Arduino)
 
 ```cpp
 #include <SPI.h>
 #include <LoRa.h>
+#include <Wire.h>
+#include <Adafruit_AHTX0.h>
+#include <Adafruit_BMP280.h>
 
 // ---- Pin Config ----
 #define SS   10
@@ -624,6 +858,10 @@ void loop() {
 #define FREQUENCY   433E6
 #define SYNC_WORD   0x12
 #define BAUD_RATE   9600
+
+// ---- AHT20 + BMP280 Sensors ----
+Adafruit_AHTX0 aht;
+Adafruit_BMP280 bmp;
 
 int counter = 0;
 unsigned long lastSendTime = 0;
@@ -634,12 +872,22 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Team C] LoRa init FAILED!");
+    Serial.println("[Joyanta-C] LoRa init FAILED!");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Team C] Arduino Send+Receive Ready");
+  Serial.println("[Joyanta-C] Arduino Send+Receive Ready");
+
+  if (!aht.begin()) {
+    Serial.println("[Joyanta-C] AHT20 NOT FOUND! Check I2C wiring.");
+    while (1);
+  }
+  if (!bmp.begin(0x76)) {  // try 0x77 instead if this fails on your board
+    Serial.println("[Joyanta-C] BMP280 NOT FOUND! Check I2C wiring/address.");
+    while (1);
+  }
+  Serial.println("[Joyanta-C] AHT20 + BMP280 ready.");
 }
 
 void loop() {
@@ -650,7 +898,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Team C] Received: ");
+    Serial.print("[Joyanta-C] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -661,11 +909,20 @@ void loop() {
   if (millis() - lastSendTime > SEND_INTERVAL) {
     lastSendTime = millis();
     counter++;
-    String message = "Hello from TeamC | Packet #" + String(counter);
+
+    sensors_event_t humidity, temp;
+    aht.getEvent(&humidity, &temp);
+    float pressure = bmp.readPressure() / 100.0F;
+
+    String message = "Joyanta-C | Packet #" + String(counter) +
+                      " | Temp=" + String(temp.temperature, 1) + "C" +
+                      " | Hum=" + String(humidity.relative_humidity, 1) + "%" +
+                      " | Pres=" + String(pressure, 1) + "hPa";
+
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
-    Serial.println("[Team C] Sent: " + message);
+    Serial.println("[Joyanta-C] Sent: " + message);
   }
 }
 ```
@@ -676,31 +933,35 @@ void loop() {
 
 # Expected Serial Monitor Output
 
-## Team A Serial Monitor (115200 baud)
+## Team A (Maruf) Serial Monitor (115200 baud)
 ```
-[Team A] ESP32 Send+Receive Ready
-[Team A] Sent: Hello from TeamA | Packet #1
-[Team A] Received: Hello from TeamB | Packet #1  | RSSI: -52 dBm
-[Team A] Received: Hello from TeamC | Packet #1  | RSSI: -55 dBm
-[Team A] Sent: Hello from TeamA | Packet #2
-```
-
-## Team B Serial Monitor (9600 baud)
-```
-[Team B] Arduino Send+Receive Ready
-[Team B] Sent: Hello from TeamB | Packet #1
-[Team B] Received: Hello from TeamA | Packet #1  | RSSI: -48 dBm
-[Team B] Received: Hello from TeamC | Packet #1  | RSSI: -50 dBm
-[Team B] Sent: Hello from TeamB | Packet #2
+[Maruf-A] ESP32 Send+Receive Ready
+[Maruf-A] Preheating MP503 sensor (20s)...
+[Maruf-A] MP503 ready.
+[Maruf-A] Sent: Maruf-A | Packet #1 | AirQuality_Raw=512 | AirQuality_V=0.41
+[Maruf-A] Received: Abid-B | Packet #1 | Lux=320  | RSSI: -52 dBm
+[Maruf-A] Received: Joyanta-C | Packet #1 | Temp=29.4C | Hum=68.2% | Pres=1008.3hPa  | RSSI: -55 dBm
+[Maruf-A] Sent: Maruf-A | Packet #2 | AirQuality_Raw=515 | AirQuality_V=0.42
 ```
 
-## Team C Serial Monitor (9600 baud)
+## Team B (Abid) Serial Monitor (9600 baud)
 ```
-[Team C] Arduino Send+Receive Ready
-[Team C] Sent: Hello from TeamC | Packet #1
-[Team C] Received: Hello from TeamA | Packet #1  | RSSI: -49 dBm
-[Team C] Received: Hello from TeamB | Packet #1  | RSSI: -51 dBm
-[Team C] Sent: Hello from TeamC | Packet #2
+[Abid-B] Arduino Send+Receive Ready
+[Abid-B] TSL2561 ready.
+[Abid-B] Sent: Abid-B | Packet #1 | Lux=320
+[Abid-B] Received: Maruf-A | Packet #1 | AirQuality_Raw=512 | AirQuality_V=0.41  | RSSI: -48 dBm
+[Abid-B] Received: Joyanta-C | Packet #1 | Temp=29.4C | Hum=68.2% | Pres=1008.3hPa  | RSSI: -50 dBm
+[Abid-B] Sent: Abid-B | Packet #2 | Lux=318
+```
+
+## Team C (Joyanta) Serial Monitor (9600 baud)
+```
+[Joyanta-C] Arduino Send+Receive Ready
+[Joyanta-C] AHT20 + BMP280 ready.
+[Joyanta-C] Sent: Joyanta-C | Packet #1 | Temp=29.4C | Hum=68.2% | Pres=1008.3hPa
+[Joyanta-C] Received: Maruf-A | Packet #1 | AirQuality_Raw=512 | AirQuality_V=0.41  | RSSI: -49 dBm
+[Joyanta-C] Received: Abid-B | Packet #1 | Lux=320  | RSSI: -51 dBm
+[Joyanta-C] Sent: Joyanta-C | Packet #2 | Temp=29.5C | Hum=68.0% | Pres=1008.2hPa
 ```
 
 ---
@@ -716,13 +977,21 @@ void loop() {
 
 ---
 
-# Safety Checklist (Team B & C)
+# Safety Checklist (Team B/Abid & Team C/Joyanta)
 
 - ✅ Antenna attached to Ra-01 before powering on
 - ✅ Ra-01 VCC connected to 3.3V only (NOT 5V)
 - ✅ VCCA = 3.3V and VCCB = 5V (NOT reversed)
 - ✅ All GNDs connected together
 - ✅ USB cable connected to laptop
+
+# Safety Checklist — New Sensors (All Teams)
+
+- ✅ MP503 (Team A/Maruf): VCC → 5V, NOT 3.3V — module needs full 5V for the heater element
+- ✅ MP503 (Team A/Maruf): allow the 20s preheat in code to finish before trusting readings
+- ✅ TSL2561 (Team B/Abid) and AHT20+BMP280 (Team C/Joyanta): double-check VCC voltage rating printed on your specific breakout before connecting (most are 3.3V/5V tolerant, but confirm)
+- ✅ I2C wiring (Team B/Abid & Team C/Joyanta): SDA→A4, SCL→A5 — do not swap these two
+- ✅ All sensor GNDs join the same common ground as the LoRa module and Arduino/ESP32
 
 ---
 
@@ -732,15 +1001,27 @@ void loop() {
 1. Install **Arduino IDE** from arduino.cc
 2. Library Manager → Search **"LoRa"** → Install **LoRa by Sandeep Mistry**
 
-### Team A Only (ESP32 board setup)
+### Team A (Maruf) Only (ESP32 board setup)
 1. Arduino IDE → File → Preferences
 2. Additional Board URLs → add:
    `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
 3. Tools → Board Manager → Search **ESP32** → Install
 4. Tools → Board → Select **ESP32 Dev Module**
+5. No extra library needed for MP503 — it's a plain analog read using `analogRead()`
+
+### Team B (Abid) Only — TSL2561 libraries
+1. Library Manager → Search **"Adafruit TSL2561"** → Install
+2. Accept the prompt to also install **Adafruit Unified Sensor**
+
+### Team C (Joyanta) Only — AHT20 + BMP280 libraries
+1. Library Manager → Search **"Adafruit AHTX0"** → Install
+2. Library Manager → Search **"Adafruit BMP280"** → Install
+3. Accept the prompt to also install **Adafruit BusIO** (and Adafruit Unified Sensor if prompted)
 
 ---
 
 *Project: Data Communication Course — LoRa Radio Wave Transmission*
-*Team A: ESP32 | Team B: Arduino UNO | Team C: Arduino UNO*
+*Team A (Maruf): ESP32 + MP-135/MP503 Air Quality Sensor*
+*Team B (Abid): Arduino UNO + TSL2561 Luminosity/IR Sensor*
+*Team C (Joyanta): Arduino UNO + AHT20+BMP280 Temp/Humidity/Pressure Sensor*
 *All teams communicate on 433MHz | Sync Word 0x12*
