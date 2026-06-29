@@ -1,4 +1,5 @@
 # Data Communication Project
+
 ## LoRa SX1278 433MHz — 3 Team Full Communication + Environmental Sensors
 ### Course: Data Communication | Arduino UNO & ESP32
 
@@ -278,6 +279,9 @@ void loop() {
 ```cpp
 #include <SPI.h>
 #include <LoRa.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
 
 // ---- Pin Config ----
 #define SS   5
@@ -289,12 +293,12 @@ void loop() {
 #define SYNC_WORD   0x12
 #define BAUD_RATE   115200
 
-// ---- MP503 Air Quality Sensor ----
-#define MP503_AO_PIN 34
-#define PREHEAT_TIME 20000
+// ---- TSL2561 Sensor ----
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
 int counter = 0;
 unsigned long lastSendTime = 0;
+bool sensorReady = false;
 #define SEND_INTERVAL 3000
 
 void setup() {
@@ -302,16 +306,22 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Maruf-A] LoRa init FAILED!");
+    Serial.println("[Abid-B] LoRa init FAILED!");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Maruf-A] ESP32 Send+Receive Ready");
+  Serial.println("[Abid-B] ESP32 Send+Receive Ready");
 
-  Serial.println("[Maruf-A] Preheating MP503 sensor (20s)...");
-  delay(PREHEAT_TIME);
-  Serial.println("[Maruf-A] MP503 ready.");
+  if (!tsl.begin()) {
+    Serial.println("[Abid-B] TSL2561 NOT FOUND! Running without sensor.");
+    sensorReady = false;
+  } else {
+    tsl.enableAutoRange(true);
+    tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
+    Serial.println("[Abid-B] TSL2561 ready.");
+    sensorReady = true;
+  }
 }
 
 void loop() {
@@ -322,7 +332,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Maruf-A] Received: ");
+    Serial.print("[Abid-B] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -334,17 +344,20 @@ void loop() {
     lastSendTime = millis();
     counter++;
 
-    int airRaw = analogRead(MP503_AO_PIN);
-    float airVoltage = airRaw * (3.3 / 4095.0);
+    uint32_t lux = 0;
+    if (sensorReady) {
+      uint16_t broadband, ir;
+      tsl.getLuminosity(&broadband, &ir);
+      lux = tsl.calculateLux(broadband, ir);
+    }
 
-    String message = "Maruf-A | Packet #" + String(counter) +
-                      " | AirQuality_Raw=" + String(airRaw) +
-                      " | AirQuality_V=" + String(airVoltage, 2);
+    String message = "Abid-B | Packet #" + String(counter) +
+                      " | Lux=" + (sensorReady ? String(lux) : "N/A");
 
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
-    Serial.println("[Maruf-A] Sent: " + message);
+    Serial.println("[Abid-B] Sent: " + message);
   }
 }
 ```
