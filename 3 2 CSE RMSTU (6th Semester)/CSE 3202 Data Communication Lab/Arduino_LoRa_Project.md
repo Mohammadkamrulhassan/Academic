@@ -886,6 +886,8 @@ Adafruit_BMP280 bmp;
 
 int counter = 0;
 unsigned long lastSendTime = 0;
+bool ahtReady = false;
+bool bmpReady = false;
 #define SEND_INTERVAL 3000
 
 void setup() {
@@ -901,14 +903,20 @@ void setup() {
   Serial.println("[Joyanta-C] Arduino Send+Receive Ready");
 
   if (!aht.begin()) {
-    Serial.println("[Joyanta-C] AHT20 NOT FOUND! Check I2C wiring.");
-    while (1);
+    Serial.println("[Joyanta-C] AHT20 NOT FOUND! Running without it.");
+    ahtReady = false;
+  } else {
+    Serial.println("[Joyanta-C] AHT20 ready.");
+    ahtReady = true;
   }
-  if (!bmp.begin(0x76)) {  // try 0x77 instead if this fails on your board
-    Serial.println("[Joyanta-C] BMP280 NOT FOUND! Check I2C wiring/address.");
-    while (1);
+
+  if (!bmp.begin(0x76)) {
+    Serial.println("[Joyanta-C] BMP280 NOT FOUND! Running without it.");
+    bmpReady = false;
+  } else {
+    Serial.println("[Joyanta-C] BMP280 ready.");
+    bmpReady = true;
   }
-  Serial.println("[Joyanta-C] AHT20 + BMP280 ready.");
 }
 
 void loop() {
@@ -931,14 +939,26 @@ void loop() {
     lastSendTime = millis();
     counter++;
 
-    sensors_event_t humidity, temp;
-    aht.getEvent(&humidity, &temp);
-    float pressure = bmp.readPressure() / 100.0F;
+    String tempStr = "N/A";
+    String humStr  = "N/A";
+    String presStr = "N/A";
+
+    if (ahtReady) {
+      sensors_event_t humidity, temp;
+      aht.getEvent(&humidity, &temp);
+      tempStr = String(temp.temperature, 1) + "C";
+      humStr  = String(humidity.relative_humidity, 1) + "%";
+    }
+
+    if (bmpReady) {
+      float pressure = bmp.readPressure() / 100.0F;
+      presStr = String(pressure, 1) + "hPa";
+    }
 
     String message = "Joyanta-C | Packet #" + String(counter) +
-                      " | Temp=" + String(temp.temperature, 1) + "C" +
-                      " | Hum=" + String(humidity.relative_humidity, 1) + "%" +
-                      " | Pres=" + String(pressure, 1) + "hPa";
+                      " | Temp=" + tempStr +
+                      " | Hum=" + humStr +
+                      " | Pres=" + presStr;
 
     LoRa.beginPacket();
     LoRa.print(message);
