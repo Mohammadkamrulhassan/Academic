@@ -641,7 +641,9 @@ void loop() {
     lastSendTime = millis();
     counter++;
 
-    uint16_t lux = tsl.getLuminosity(TSL2561_VISIBLE);
+    uint16_t broadband, ir;
+    tsl.getLuminosity(&broadband, &ir);
+    uint32_t lux = tsl.calculateLux(broadband, ir);
 
     String message = "Abid-B | Packet #" + String(counter) +
                       " | Lux=" + String(lux);
