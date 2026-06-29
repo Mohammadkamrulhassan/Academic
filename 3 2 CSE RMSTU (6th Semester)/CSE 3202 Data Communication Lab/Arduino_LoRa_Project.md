@@ -598,6 +598,7 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 1234
 
 int counter = 0;
 unsigned long lastSendTime = 0;
+bool sensorReady = false;
 #define SEND_INTERVAL 3000
 
 void setup() {
@@ -613,12 +614,14 @@ void setup() {
   Serial.println("[Abid-B] Arduino Send+Receive Ready");
 
   if (!tsl.begin()) {
-    Serial.println("[Abid-B] TSL2561 NOT FOUND! Check I2C wiring.");
-    while (1);
+    Serial.println("[Abid-B] TSL2561 NOT FOUND! Running without sensor.");
+    sensorReady = false;
+  } else {
+    tsl.enableAutoRange(true);
+    tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
+    Serial.println("[Abid-B] TSL2561 ready.");
+    sensorReady = true;
   }
-  tsl.enableAutoRange(true);
-  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
-  Serial.println("[Abid-B] TSL2561 ready.");
 }
 
 void loop() {
@@ -641,12 +644,15 @@ void loop() {
     lastSendTime = millis();
     counter++;
 
-    uint16_t broadband, ir;
-    tsl.getLuminosity(&broadband, &ir);
-    uint32_t lux = tsl.calculateLux(broadband, ir);
+    uint32_t lux = 0;
+    if (sensorReady) {
+      uint16_t broadband, ir;
+      tsl.getLuminosity(&broadband, &ir);
+      lux = tsl.calculateLux(broadband, ir);
+    }
 
     String message = "Abid-B | Packet #" + String(counter) +
-                      " | Lux=" + String(lux);
+                      " | Lux=" + (sensorReady ? String(lux) : "N/A");
 
     LoRa.beginPacket();
     LoRa.print(message);
