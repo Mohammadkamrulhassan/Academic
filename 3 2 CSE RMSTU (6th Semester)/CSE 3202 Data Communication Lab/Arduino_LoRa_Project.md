@@ -279,9 +279,6 @@ void loop() {
 ```cpp
 #include <SPI.h>
 #include <LoRa.h>
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_TSL2561_U.h>
 
 // ---- Pin Config ----
 #define SS   5
@@ -293,8 +290,9 @@ void loop() {
 #define SYNC_WORD   0x12
 #define BAUD_RATE   115200
 
-// ---- TSL2561 Sensor ----
-Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
+// ---- MP503 Air Quality Sensor ----
+#define MP503_AO_PIN  34
+#define PREHEAT_TIME  20000
 
 int counter = 0;
 unsigned long lastSendTime = 0;
@@ -306,20 +304,23 @@ void setup() {
   LoRa.setPins(SS, RST, DIO0);
 
   if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("[Abid-B] LoRa init FAILED!");
+    Serial.println("[Maruf-A] LoRa init FAILED!");
     while (1);
   }
 
   LoRa.setSyncWord(SYNC_WORD);
-  Serial.println("[Abid-B] ESP32 Send+Receive Ready");
+  Serial.println("[Maruf-A] ESP32 Send+Receive Ready");
 
-  if (!tsl.begin()) {
-    Serial.println("[Abid-B] TSL2561 NOT FOUND! Running without sensor.");
+  Serial.println("[Maruf-A] Preheating MP503 sensor (20s)...");
+  delay(PREHEAT_TIME);
+
+  // Check sensor connection by reading initial value
+  int testRead = analogRead(MP503_AO_PIN);
+  if (testRead == 0 || testRead == 4095) {
+    Serial.println("[Maruf-A] MP503 NOT FOUND or disconnected! Running without sensor.");
     sensorReady = false;
   } else {
-    tsl.enableAutoRange(true);
-    tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
-    Serial.println("[Abid-B] TSL2561 ready.");
+    Serial.println("[Maruf-A] MP503 ready.");
     sensorReady = true;
   }
 }
@@ -332,7 +333,7 @@ void loop() {
     while (LoRa.available()) {
       received += (char)LoRa.read();
     }
-    Serial.print("[Abid-B] Received: ");
+    Serial.print("[Maruf-A] Received: ");
     Serial.print(received);
     Serial.print(" | RSSI: ");
     Serial.print(LoRa.packetRssi());
@@ -344,20 +345,23 @@ void loop() {
     lastSendTime = millis();
     counter++;
 
-    uint32_t lux = 0;
-    if (sensorReady) {
-      uint16_t broadband, ir;
-      tsl.getLuminosity(&broadband, &ir);
-      lux = tsl.calculateLux(broadband, ir);
-    }
+    String message;
 
-    String message = "Abid-B | Packet #" + String(counter) +
-                      " | Lux=" + (sensorReady ? String(lux) : "N/A");
+    if (sensorReady) {
+      int airRaw = analogRead(MP503_AO_PIN);
+      float airVoltage = airRaw * (3.3 / 4095.0);
+      message = "Maruf-A | Packet #" + String(counter) +
+                " | AirQuality_Raw=" + String(airRaw) +
+                " | AirQuality_V=" + String(airVoltage, 2);
+    } else {
+      message = "Maruf-A | Packet #" + String(counter) +
+                " | AirQuality_Raw=N/A | AirQuality_V=N/A";
+    }
 
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
-    Serial.println("[Abid-B] Sent: " + message);
+    Serial.println("[Maruf-A] Sent: " + message);
   }
 }
 ```
@@ -526,7 +530,9 @@ void setup() {
 void loop() {
   counter++;
 
-  uint16_t lux = tsl.getLuminosity(TSL2561_VISIBLE);
+  uint16_t broadband, ir;
+  tsl.getLuminosity(&broadband, &ir);
+  uint32_t lux = tsl.calculateLux(broadband, ir);
 
   String message = "Abid-B | Packet #" + String(counter) +
                     " | Lux=" + String(lux);
@@ -768,6 +774,8 @@ Adafruit_AHTX0 aht;
 Adafruit_BMP280 bmp;
 
 int counter = 0;
+bool ahtReady = false;
+bool bmpReady = false;
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -783,27 +791,45 @@ void setup() {
   Serial.println("Sending to Team A (Maruf) and Team B (Abid)...");
 
   if (!aht.begin()) {
-    Serial.println("[Joyanta-C] AHT20 NOT FOUND! Check I2C wiring.");
-    while (1);
+    Serial.println("[Joyanta-C] AHT20 NOT FOUND! Running without it.");
+    ahtReady = false;
+  } else {
+    Serial.println("[Joyanta-C] AHT20 ready.");
+    ahtReady = true;
   }
-  if (!bmp.begin(0x76)) {  // try 0x77 instead if this fails on your board
-    Serial.println("[Joyanta-C] BMP280 NOT FOUND! Check I2C wiring/address.");
-    while (1);
+
+  if (!bmp.begin(0x76)) {
+    Serial.println("[Joyanta-C] BMP280 NOT FOUND! Running without it.");
+    bmpReady = false;
+  } else {
+    Serial.println("[Joyanta-C] BMP280 ready.");
+    bmpReady = true;
   }
-  Serial.println("[Joyanta-C] AHT20 + BMP280 ready.");
 }
 
 void loop() {
   counter++;
 
-  sensors_event_t humidity, temp;
-  aht.getEvent(&humidity, &temp);
-  float pressure = bmp.readPressure() / 100.0F;  // Pa -> hPa
+  String tempStr = "N/A";
+  String humStr  = "N/A";
+  String presStr = "N/A";
+
+  if (ahtReady) {
+    sensors_event_t humidity, temp;
+    aht.getEvent(&humidity, &temp);
+    tempStr = String(temp.temperature, 1) + "C";
+    humStr  = String(humidity.relative_humidity, 1) + "%";
+  }
+
+  if (bmpReady) {
+    float pressure = bmp.readPressure() / 100.0F;
+    presStr = String(pressure, 1) + "hPa";
+  }
 
   String message = "Joyanta-C | Packet #" + String(counter) +
-                    " | Temp=" + String(temp.temperature, 1) + "C" +
-                    " | Hum=" + String(humidity.relative_humidity, 1) + "%" +
-                    " | Pres=" + String(pressure, 1) + "hPa";
+                    " | Temp=" + tempStr +
+                    " | Hum=" + humStr +
+                    " | Pres=" + presStr;
 
   LoRa.beginPacket();
   LoRa.print(message);
