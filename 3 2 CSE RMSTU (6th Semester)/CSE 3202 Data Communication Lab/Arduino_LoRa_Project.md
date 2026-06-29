@@ -690,6 +690,67 @@ void loop() {
 ## Wiring
 
 Exact same as Team B (Abid) — refer to Team B wiring section.
+## Wiring
+
+### Power Wiring
+
+| Arduino | To | Note |
+|---|---|---|
+| 3.3V | Level Converter VCCA | A side power |
+| 3.3V | Ra-01 3V3 | Ra-01 power direct |
+| 5V | Level Converter VCCB | B side power |
+| GND | Converter GND (A side) | Common ground |
+| GND | Converter GND (B side) | Common ground |
+| GND | Ra-01 GND | Common ground |
+
+### Signal Wiring
+
+| Arduino | Converter B | Converter A | Ra-01 |
+|---|---|---|---|
+| D13 SCK | B0 | A0 | SCK |
+| D12 MISO | B1 | A1 | MISO |
+| D11 MOSI | B2 | A2 | MOSI |
+| D10 NSS | B3 | A3 | NSS |
+| D9 RST | B4 | A4 | RST |
+| D8 DIO0 | B5 | A5 | DIO0 |
+
+```
+LAPTOP USB → [Arduino UNO]
+    ├── 3.3V ──┬──→ VCCA (Converter)
+    │          └──→ 3V3  (Ra-01)
+    ├── 5V  ──────→ VCCB (Converter)
+    ├── GND ──┬──→ GND-A + GND-B (Converter)
+    │         └──→ GND (Ra-01)
+    ├── D13 ──→ [B0═A0] ──→ SCK
+    ├── D12 ──→ [B1═A1] ──→ MISO
+    ├── D11 ──→ [B2═A2] ──→ MOSI
+    ├── D10 ──→ [B3═A3] ──→ NSS
+    ├── D9  ──→ [B4═A4] ──→ RST
+    └── D8  ──→ [B5═A5] ──→ DIO0
+```
+
+### Ra-01 Pin Layout
+```
+┌─────────────────┐
+│  MISO  │  DIO0  │
+│  SCK   │  MOSI  │
+│  RST   │  NSS   │
+│  GND   │  3V3   │
+└────────┴────────┘
+       [antenna]
+```
+
+## Configuration
+```
+Frequency  : 433E6
+Sync Word  : 0x12
+Baud Rate  : 9600
+SS  pin    : 10
+RST pin    : 9
+DIO0 pin   : 8
+```
+
+---
 
 ## Configuration
 ```
